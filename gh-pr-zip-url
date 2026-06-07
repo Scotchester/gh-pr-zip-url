@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -e
+
+# Check for jq in the PATH
+if ! type -p jq >/dev/null; then
+  echo "jq is required to use this command. Installation instructions: https://jqlang.org/download/" >&2
+  exit 1
+fi
+
+# Fetch the requested PR's data and use jq to format the zip archive URL
+gh pr view $@ --json headRefName,headRepository | jq  '"https://github.com/\(.headRepository.nameWithOwner)/archive/refs/heads/\(.headRefName).zip"' -r
