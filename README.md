@@ -41,25 +41,43 @@ makes it a single command to generate the project and get it ready for testing:
 
 ```zsh
 wagtailstartpr() {
+    # Start a new Wagtail project using a PR branch on a template repo
+    # (e.g., https://github.com/wagtail/news-template)
+    #
     # Takes one argument:
     # the number of a PR in a Wagtail project template repo you're currently in
-    
+
+    # Store the current folder name
+    TEMPLATE_FOLDER=${PWD:t}
+
+    # Replace characters not allowed in Python identifiers with underscores
+    SAFE_NAME=$(echo "$TEMPLATE_FOLDER" | sed -e 's/[^a-zA-Z0-9_]/_/g')
+
+    # Make the module name identifiable and unique
+    MODULE_NAME=${SAFE_NAME}_test_pr_"$1"
+
+    # Use gh CLI to get and store PR archive URL
+    PR_ZIP_URL=$(gh pr-zip-url "$1")
+
     # Activate the template repo's virtualenv, if necessary
     source .venv/bin/activate
-    
+
+    # Back out of template repo because we don't want template-ception
+    cd ../
+
     # Run the wagtail start command to generate the project
-    wagtail start test_pr_"$1" --template `gh pr-zip-url "$1"`
-    
+    wagtail start $MODULE_NAME --template $PR_ZIP_URL
+
     # Deactivate the template repo's virtualenv
     deactivate
-    
+
     # Move into the new project's directory
-    cd test_pr_"$1"
-    
+    cd $MODULE_NAME
+
     # Create a project-specific virtualenv and activate it
     python -m venv .venv
     source .venv/bin/activate
-    
+
     # Install the requirements
     pip install -r requirements.txt
 }
